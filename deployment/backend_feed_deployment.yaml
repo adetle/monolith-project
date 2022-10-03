@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-feed
+  labels:
+    app: backend-feed
+spec:
+  selector:
+    matchLabels:
+      app: backend-feed
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: backend-feed
+    spec:
+      containers:
+      - name: backend-feed
+        image: docker.io/adetle/udagram-api-feed:v2
+        envFrom:
+          - secretRef:
+              name: env-secret
+          - secretRef:
+              name: aws-secret
+          - configMapRef:
+              name: env-configmap
+        ports:
+          - containerPort: 8080
+        volumeMounts:
+          - mountPath: "/root/.aws/"
+            name: aws-configmap
+      volumes:
+        - name: aws-configmap
+          configMap:
+            name: aws-configmap
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-feed
+spec:
+  selector:
+      app: backend-feed
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
